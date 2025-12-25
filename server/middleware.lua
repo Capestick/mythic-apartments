@@ -81,35 +81,49 @@ function RegisterMiddleware()
 		print(string.format("^3[APARTMENTS DEBUG] Characters:GetSpawnPoints - GetCharacterApartment returned: %s^7", tostring(aptId)))
 		
 		
-		if aptId and aptId > 0 then
+		if not aptId or aptId == 0 then
+			print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Character has NO apartment (aptId: %s), returning empty spawns^7", tostring(aptId)))
+			return spawns
+		end
+		
+		
 			print(string.format("^3[APARTMENTS DEBUG] Characters:GetSpawnPoints - Character has apartment %s, fetching apartment data^7", tostring(aptId)))
 			local apt = _aptData[aptId]
 			if apt then
-				-- Check if interior and wakeup data exists
+				
 				if apt.interior and apt.interior.wakeup then
 					local roomLabel = apt.roomLabel or aptId
 					local buildingLabel = apt.buildingLabel or apt.buildingName or "Apartment"
 					local label = string.format("%s - Room %s", buildingLabel, roomLabel)
 					
-					-- Safely access wakeup coordinates with fallbacks
+					
 					local wakeupX = apt.interior.wakeup.x
 					local wakeupY = apt.interior.wakeup.y
 					local wakeupZ = apt.interior.wakeup.z
 					local wakeupH = apt.interior.wakeup.h or 0.0
 					
-					-- Validate coordinates exist
-					if wakeupX ~= nil and wakeupY ~= nil and wakeupZ ~= nil then
+					
+					wakeupX = tonumber(wakeupX)
+					wakeupY = tonumber(wakeupY)
+					wakeupZ = tonumber(wakeupZ)
+					wakeupH = tonumber(wakeupH) or 0.0
+					
+					
+					if wakeupX and wakeupY and wakeupZ then
 						print(string.format("^3[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment found: %s, wakeup coords: %s, %s, %s^7", label, tostring(wakeupX), tostring(wakeupY), tostring(wakeupZ)))
+						
+						
+						local locationData = {
+							x = wakeupX,
+							y = wakeupY,
+							z = wakeupZ,
+							h = wakeupH
+						}
 						
 						table.insert(spawns, {
 							id = string.format("APT:%s:%s", aptId, cData.SID),
 							label = label,
-							location = {
-								x = wakeupX,
-								y = wakeupY,
-								z = wakeupZ,
-								h = wakeupH
-							},
+							location = locationData,
 							icon = "building",
 							event = "Apartment:SpawnInside",
 						})
@@ -125,10 +139,8 @@ function RegisterMiddleware()
 					end
 				end
 			else
-				print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s not found in _aptData!^7", tostring(aptId)))
+				print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s not found in _aptData! Returning empty spawns^7", tostring(aptId)))
 			end
-		else
-			print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Character has NO apartment (aptId: %s), will spawn homeless^7", tostring(aptId)))
 		end
 		
 		
