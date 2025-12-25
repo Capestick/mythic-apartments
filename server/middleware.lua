@@ -92,55 +92,54 @@ function RegisterMiddleware()
 			if apt then
 				
 				if apt.interior and apt.interior.wakeup then
-					local roomLabel = apt.roomLabel or aptId
-					local buildingLabel = apt.buildingLabel or apt.buildingName or "Apartment"
-					local label = string.format("%s - Room %s", buildingLabel, roomLabel)
+				local roomLabel = apt.roomLabel or aptId
+				local buildingLabel = apt.buildingLabel or apt.buildingName or "Apartment"
+				local label = string.format("%s - Room %s", buildingLabel, roomLabel)
+				
+				
+				local wakeupX = apt.interior.wakeup.x
+				local wakeupY = apt.interior.wakeup.y
+				local wakeupZ = apt.interior.wakeup.z
+				local wakeupH = apt.interior.wakeup.h or 0.0
+				
+				
+				wakeupX = tonumber(wakeupX)
+				wakeupY = tonumber(wakeupY)
+				wakeupZ = tonumber(wakeupZ)
+				wakeupH = tonumber(wakeupH) or 0.0
+				
+				
+				if wakeupX and wakeupY and wakeupZ then
+					print(string.format("^3[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment found: %s, wakeup coords: %s, %s, %s^7", label, tostring(wakeupX), tostring(wakeupY), tostring(wakeupZ)))
 					
 					
-					local wakeupX = apt.interior.wakeup.x
-					local wakeupY = apt.interior.wakeup.y
-					local wakeupZ = apt.interior.wakeup.z
-					local wakeupH = apt.interior.wakeup.h or 0.0
-					
-					
-					wakeupX = tonumber(wakeupX)
-					wakeupY = tonumber(wakeupY)
-					wakeupZ = tonumber(wakeupZ)
-					wakeupH = tonumber(wakeupH) or 0.0
-					
-					
-					if wakeupX and wakeupY and wakeupZ then
-						print(string.format("^3[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment found: %s, wakeup coords: %s, %s, %s^7", label, tostring(wakeupX), tostring(wakeupY), tostring(wakeupZ)))
-						
-						
-						local locationData = {
+					local locationData = {
 							x = wakeupX,
 							y = wakeupY,
 							z = wakeupZ,
 							h = wakeupH
 						}
 						
-						table.insert(spawns, {
-							id = string.format("APT:%s:%s", aptId, cData.SID),
-							label = label,
-							location = locationData,
-							icon = "building",
-							event = "Apartment:SpawnInside",
-						})
-						print(string.format("^2[APARTMENTS DEBUG] Characters:GetSpawnPoints - Added spawn point for apartment %s^7", tostring(aptId)))
-					else
-						print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s wakeup coordinates are invalid (x: %s, y: %s, z: %s)!^7", tostring(aptId), tostring(wakeupX), tostring(wakeupY), tostring(wakeupZ)))
-					end
+					table.insert(spawns, {
+						id = string.format("APT:%s:%s", aptId, cData.SID),
+						label = label,
+						location = locationData,
+						icon = "building",
+						event = "Apartment:SpawnInside",
+					})
+					print(string.format("^2[APARTMENTS DEBUG] Characters:GetSpawnPoints - Added spawn point for apartment %s^7", tostring(aptId)))
 				else
-					if not apt.interior then
-						print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s has no interior data!^7", tostring(aptId)))
-					elseif not apt.interior.wakeup then
-						print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s has no wakeup data!^7", tostring(aptId)))
-					end
+					print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s wakeup coordinates are invalid (x: %s, y: %s, z: %s)!^7", tostring(aptId), tostring(wakeupX), tostring(wakeupY), tostring(wakeupZ)))
 				end
 			else
-				print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s not found in _aptData! Returning empty spawns^7", tostring(aptId)))
+				if not apt.interior then
+					print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s has no interior data!^7", tostring(aptId)))
+				elseif not apt.interior.wakeup then
+					print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s has no wakeup data!^7", tostring(aptId)))
+				end
 			end
+		else
+			print(string.format("^1[APARTMENTS DEBUG] Characters:GetSpawnPoints - Apartment %s not found in _aptData! Returning empty spawns^7", tostring(aptId)))
 		end
 		
 		
