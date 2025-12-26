@@ -424,6 +424,85 @@ RegisterNetEvent("Apartment:Client:RaidStateChanged", function(aptId, isRaided)
 	end
 end)
 
+local _floorRaidTargets = {}
+
+function CreateFloorRaidTargets(buildingName, floor)
+	if not buildingName or floor == nil then
+		return
+	end
+	
+	-- Remove old raid targets for this floor
+	if _floorRaidTargets[buildingName] and _floorRaidTargets[buildingName][floor] then
+		for _, aptId in ipairs(_floorRaidTargets[buildingName][floor]) do
+			Targeting.Zones:RemoveZone(string.format("apt-%s-raid", aptId))
+		end
+	end
+	
+	-- Get all apartments on this floor
+	Callbacks:ServerCallback("Apartment:GetFloorApartments", {
+		buildingName = buildingName,
+		floor = floor
+	}, function(floorApartments)
+		if not floorApartments or #floorApartments == 0 then
+			return
+		end
+		
+		-- Store which apartments we're creating targets for
+		_floorRaidTargets[buildingName] = _floorRaidTargets[buildingName] or {}
+		_floorRaidTargets[buildingName][floor] = {}
+		
+		-- Create raid targets for each apartment on this floor
+		for _, aptData in ipairs(floorApartments) do
+			local aptId = aptData.aptId
+			local apt = GlobalState[string.format("Apartment:%s", aptId)]
+			if apt then
+				local doorEntry = nil
+				if apt.zones and apt.zones.doorEntry then
+					doorEntry = apt.zones.doorEntry
+				elseif apt.doorEntry then
+					doorEntry = apt.doorEntry
+				elseif apt.coords then
+					doorEntry = apt.coords
+				end
+				
+				if doorEntry then
+					Targeting.Zones:AddBox(
+						string.format("apt-%s-raid", aptId),
+						"shield-halved",
+						doorEntry,
+						1.5,
+						1.5,
+						{
+							heading = 0,
+							minZ = doorEntry.z - 1.0,
+							maxZ = doorEntry.z + 2.0
+						},
+						{
+							{
+								icon = "shield-halved",
+								text = "Raid Apartment",
+								event = "Apartment:Client:Raid",
+								data = {
+									aptId = aptId,
+									unit = aptData.unit
+								},
+								isEnabled = function(data)
+									return LocalPlayer.state.onDuty == "police"
+								end,
+							},
+						},
+						3.0,
+						true
+					)
+					table.insert(_floorRaidTargets[buildingName][floor], aptId)
+				end
+			end
+		end
+		
+		Targeting.Zones:Refresh()
+	end)
+end
+
 AddEventHandler("Polyzone:Enter", function(id, testedPoint, insideZones, data)
 	
 	if data and data.buildingName and data.floor ~= nil then
@@ -433,6 +512,9 @@ AddEventHandler("Polyzone:Enter", function(id, testedPoint, insideZones, data)
 			elevatorIndex = data.elevatorIndex
 		}
 		Action:Show("{keybind}primary_action{/keybind} Use Elevator")
+		
+		-- Create raid targets for all apartments on this floor
+		CreateFloorRaidTargets(data.buildingName, data.floor)
 	
 	elseif data and data.type == "wardrobe" then
 		local char = LocalPlayer.state.Character
@@ -612,6 +694,9 @@ AddEventHandler("Apartment:Client:UseElevator", function(data)
 
 	
 	TriggerServerEvent("Apartment:Server:ElevatorFloorChanged", data.buildingName, data.floor)
+	
+	-- Create raid targets for all apartments on this floor
+	CreateFloorRaidTargets(data.buildingName, data.floor)
 end)
 
 AddEventHandler("Apartment:Client:Enter", function(data)

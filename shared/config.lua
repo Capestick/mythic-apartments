@@ -10,6 +10,7 @@ Config.ReceptionPed = {
 
 Config.HotelElevatorsDesc = {
     ["nexus_apartment_block_1"] = {
+        [-1] = "Garage",
         [0] = "Lobby",
         [1] = "Rooms: 100 - 106",
         [2] = "Rooms: 200 - 206",
@@ -23,6 +24,22 @@ Config.HotelElevatorsDesc = {
 
 Config.HotelElevators = {
     ["nexus_apartment_block_1"] = { -- hotel
+        [-1] = { -- GARAGE
+            bucketReset = true, -- Resets bucket to global route when arriving at this floor
+            [1] = {
+                pos = vector4(-442.6301, -950.0204, 20.6901, 89.7917),
+                poly = {
+                    center = vector3(-442.6301, -950.0204, 20.6901),
+                    length = 2.0,
+                    width = 2.0,
+                    options = {
+                        heading = 90,
+                        minZ = 19,
+                        maxZ = 23
+                    }
+                }
+            },
+        },
         [0] = { -- GROUND FLOOR (Lobby)
             bucketReset = true, -- Resets bucket to global route when arriving at this floor
             [1] = {
@@ -38,6 +55,7 @@ Config.HotelElevators = {
                     }
                 }
             },
+            bucketReset = true, -- Resets bucket to global route when arriving at this floor
             [2] = {
                 pos = vector4(-460.8976, -928.1514, 28.102855, 93.049896),
                 poly = {

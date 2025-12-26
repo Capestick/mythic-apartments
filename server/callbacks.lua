@@ -293,4 +293,35 @@ function RegisterCallbacks()
 			floor = floor
 		})
 	end)
+
+	Callbacks:RegisterServerCallback("Apartment:GetFloorApartments", function(source, data, cb)
+		if not data or not data.buildingName or data.floor == nil then
+			cb({})
+			return
+		end
+
+		local floorApartments = {}
+		if GlobalState["Apartments"] then
+			for _, aptId in ipairs(GlobalState["Apartments"]) do
+				local apt = GlobalState[string.format("Apartment:%s", aptId)]
+				if apt and apt.buildingName == data.buildingName and apt.floor == data.floor then
+					local charSID = nil
+					if _apartmentAssignments then
+						for sid, assignedAptId in pairs(_apartmentAssignments) do
+							if assignedAptId == aptId then
+								charSID = tonumber(sid) or sid
+								break
+							end
+						end
+					end
+					table.insert(floorApartments, {
+						aptId = aptId,
+						unit = charSID,
+						roomLabel = apt.roomLabel or aptId
+					})
+				end
+			end
+		end
+		cb(floorApartments)
+	end)
 end
