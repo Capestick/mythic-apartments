@@ -350,9 +350,12 @@ RegisterNetEvent("Apartment:Client:InnerStuff", function(aptId, unit, wakeUp)
 	if not p or not p.interior then
 		return
 	end
-	if p.floor and p.buildingName and _currentFloor ~= p.floor then
-		_currentFloor = p.floor
-		TriggerServerEvent("Apartment:Server:ElevatorFloorChanged", p.buildingName, p.floor)
+	
+	if p.floor and p.buildingName and LocalPlayer.state.inApartment and LocalPlayer.state.inApartment.type == aptId then
+		if _currentFloor ~= p.floor then
+			_currentFloor = p.floor
+			TriggerServerEvent("Apartment:Server:ElevatorFloorChanged", p.buildingName, p.floor)
+		end
 	end
 	
 	TriggerEvent("Interiors:Enter", vector3(p.interior.spawn.x, p.interior.spawn.y, p.interior.spawn.z))
@@ -389,6 +392,8 @@ end)
 
 
 AddEventHandler("Characters:Client:Logout", function()
+	_currentFloor = nil
+	_currentElevator = nil
 	
 	if LocalPlayer.state.inApartment then
 		local aptId = LocalPlayer.state.inApartment.type
@@ -435,8 +440,11 @@ AddEventHandler("Characters:Client:Logout", function()
 	
 	
 	_currentFloor = nil
+	_currentElevator = nil
 	_currentWardrobe = nil
 	_currentShower = nil
+	Action:Hide()
+	TriggerServerEvent("Apartment:Server:LogoutCleanup")
 end)
 
 AddEventHandler("Apartment:Client:Raid", function(data)
@@ -651,8 +659,7 @@ function OpenElevatorMenu(buildingName)
 		local isDisabled = false
 		local description = nil
 
-		
-		if _currentFloor == floorId then
+		if _currentFloor == floorId and LocalPlayer.state.inApartment then
 			isDisabled = true
 			description = "You are currently on this floor"
 		end
@@ -724,7 +731,6 @@ AddEventHandler("Apartment:Client:UseElevator", function(data)
 	
 	Sounds.Play:Distance(5.0, "elevator-bell.ogg", 0.4)
 	
-	_currentFloor = data.floor
 	Wait(200)
 	
 	DoScreenFadeIn(1200)
@@ -742,14 +748,20 @@ AddEventHandler("Apartment:Client:UseElevator", function(data)
 		
 		if aptId > 0 then
 			local apt = GlobalState[string.format("Apartment:%s", aptId)]
+			-- If this is the player's apartment floor, set _currentFloor (this IS their apartment)
 			if apt and apt.buildingName == data.buildingName and apt.floor == data.floor then
+				_currentFloor = data.floor
 				
 				local inApartmentState = LocalPlayer.state.inApartment
 				if inApartmentState and inApartmentState.type == aptId and inApartmentState.id == mySID then
 					
 					TriggerEvent("Apartment:Client:InnerStuff", aptId, mySID, false)
 				end
+			else
+				_currentFloor = nil
 			end
+		else
+			_currentFloor = nil
 		end
 	end
 end)
@@ -1046,6 +1058,8 @@ _APTS = {
 			
 			_currentWardrobe = nil
 			_currentShower = nil
+			_currentFloor = nil
+			_currentElevator = nil
 			Action:Hide()
 
 			Targeting.Zones:Refresh()

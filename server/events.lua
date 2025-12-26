@@ -122,6 +122,20 @@ RegisterNetEvent("Apartment:Server:ElevatorFloorChanged", function(buildingName,
 	end
 end)
 
+-- Clean up apartment state on logout
+RegisterNetEvent("Apartment:Server:LogoutCleanup", function()
+	local source = source
+	Player(source).state.inApartment = nil
+	Player(source).state.tpLocation = nil
+	GlobalState[string.format("%s:Apartment", source)] = nil
+	if Routing then
+		local playerRoute = Routing:GetPlayerRoute(source)
+		if playerRoute and playerRoute.route then
+			Routing:RoutePlayerToGlobalRoute(source)
+		end
+	end
+end)
+
 AddEventHandler("Characters:Created", function(source, charData)
 	if not _aptData or #_aptData == 0 then
 		if Logger then

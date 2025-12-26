@@ -46,6 +46,14 @@ function RegisterMiddleware()
 			TriggerClientEvent("Apartment:Client:Cleanup", source, GlobalState[string.format("%s:Apartment", source)])
 			GlobalState[string.format("%s:Apartment", source)] = nil
 			GlobalState[string.format("Apartment:Interior:%s", char:GetData("SID"))] = char:GetData("Apartment")
+			-- Fully clear apartment state
+			Player(source).state.inApartment = nil
+			Player(source).state.tpLocation = nil
+			
+			-- Route player back to global route (clears elevator floor state)
+			if Routing then
+				Routing:RoutePlayerToGlobalRoute(source)
+			end
 		end
 	end)
 
